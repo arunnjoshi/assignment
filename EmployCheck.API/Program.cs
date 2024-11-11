@@ -8,19 +8,13 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var configuration = builder.Configuration;
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers()
-    .AddFluentValidation(fv =>
-    {
-        fv.ImplicitlyValidateChildProperties = true;
-        fv.ImplicitlyValidateRootCollectionElements = true;
-        fv.RegisterValidatorsFromAssemblyContaining<VerifyEmployment>();
-    });
-builder.Services.AddApplicationServices();
+builder.Services.AddControllers();
+builder.Services.AddApplicationServices(configuration);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
