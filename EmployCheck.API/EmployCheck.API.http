@@ -1,0 +1,6 @@
+@EmployCheck.API_HostAddress = http://localhost:5027
+
+GET {{EmployCheck.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
