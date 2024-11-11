@@ -3,6 +3,7 @@ using EmployCheck.Contracts.Employment.Requests;
 using EmployCheck.Application;
 using EmployCheck.Application.Models;
 using EmployCheck.Application.Repository;
+using EmployCheck.Application.UnitOfWork;
 using EmployCheck.Contracts.Employment.Responses;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -13,7 +14,14 @@ var configuration = builder.Configuration;
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddFluentValidation(fv =>
+    {
+        fv.ImplicitlyValidateChildProperties = true;
+        fv.ImplicitlyValidateRootCollectionElements = true;
+        fv.RegisterValidatorsFromAssemblyContaining<VerifyEmployment>();
+    });
+;
 builder.Services.AddApplicationServices(configuration);
 var app = builder.Build();
 
@@ -26,9 +34,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+//Endpoint
 app.MapPost("/api/verify-employment",
         async (VerifyEmploymentRequest request,
-            IEmployCheckRepository employCheckRepository,
+            IUnitOfWork unitOfWork,
             IValidator<VerifyEmploymentRequest> validator) =>
         {
             var validationResult = await validator.ValidateAsync(request);
@@ -41,22 +50,33 @@ app.MapPost("/api/verify-employment",
                 }));
             }
 
-            if (await employCheckRepository.IsEmploymentVerified(request.EmployeeId))
+            if (await unitOfWork.EmployCheckRepository.IsEmploymentVerified(request.EmployeeId))
             {
                 return Results.BadRequest(new VerifyEmploymentResponse
                     { IsEmploymentVerified = false, Message = "Employment verified already" });
             }
 
-            if (await employCheckRepository.VerifyEmployment(new Employment()))
+            if (!await unitOfWork.EmployCheckRepository.VerifyEmployment(new Employment
+                {
+                    EmployeeId = request.EmployeeId,
+                    VerificationCode = request.VerificationCode,
+                    IsEmploymentVerified = false
+                }))
             {
-                return Results.Ok(new VerifyEmploymentResponse
-                    { IsEmploymentVerified = true, Message = "Verified" });
+                return Results.BadRequest(new VerifyEmploymentResponse
+                    { IsEmploymentVerified = false, Message = "Please enter a valid details" });
             }
-
-            return Results.BadRequest(new VerifyEmploymentResponse
-                { IsEmploymentVerified = false, Message = "Please enter a valid details" });
+            await unitOfWork.CompleteAsync();
+            return Results.Ok(new VerifyEmploymentResponse
+                { IsEmploymentVerified = true, Message = "Verified" });
         })
     .WithName("verify-employment")
     .WithOpenApi();
 
+// Seeding
+using (var scope = app.Services.CreateScope())
+{
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
+    await dbInitializer.InitializeAsync();
+}
 app.Run();
