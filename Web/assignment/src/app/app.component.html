@@ -1,0 +1,106 @@
+<form #form="ngForm" (ngSubmit)="onSubmit()">
+  <div class="form-container">
+    <div>
+      <label for="employmentId">Employment Id</label>
+      <input
+        type="text"
+        id="employmentId"
+        name="employmentId"
+        [(ngModel)]="formData.employeeId"
+        required
+        #employmentId="ngModel"
+        minlength="3"
+        maxlength="20"
+        (input)="numberOnlyValidation($event)"
+      />
+
+      <div
+        class="error"
+        *ngIf="
+          employmentId.errors &&
+          employmentId.touched &&
+          employmentId.errors['required']
+        "
+      >
+        Employment Id is required
+      </div>
+
+      <div
+        class="error"
+        *ngIf="
+          employmentId.errors &&
+          employmentId.touched &&
+          employmentId.errors['minlength']
+        "
+      >
+        Employment Id must be at least 3 characters.
+      </div>
+    </div>
+
+    <div>
+      <label for="company">Company</label>
+      <input
+        type="text"
+        id="company"
+        name="company"
+        [(ngModel)]="formData.companyname"
+        required
+        #company="ngModel"
+        minlength="3"
+        maxlength="20"
+      />
+      <div
+        class="error"
+        *ngIf="company.errors && company.touched && company.errors['required']"
+      >
+        Company name is required
+      </div>
+
+      <div
+        class="error"
+        *ngIf="company.errors && company.touched && company.errors['minlength']"
+      >
+        Company Id must be at least 3 characters.
+      </div>
+    </div>
+
+    <div>
+      <label for="verificationCode">Verification Code</label>
+      <input
+        type="text"
+        id="verificationCode"
+        name="verificationCode"
+        [(ngModel)]="formData.verificationCode"
+        required
+        [minlength]="4"
+        [maxLength]="4"
+        #verificationCode="ngModel"
+      />
+      <div
+        class="error"
+        *ngIf="
+          verificationCode.errors &&
+          verificationCode.touched &&
+          verificationCode.errors['required']
+        "
+      >
+        Verification Code name is required
+      </div>
+
+      <div
+        class="error"
+        *ngIf="
+          verificationCode.errors &&
+          verificationCode.touched &&
+          (verificationCode.errors['minlength'] ||
+            verificationCode.errors['maxLength'])
+        "
+      >
+        Verification Code Id must be 4 characters.
+      </div>
+    </div>
+    <div class="button-container">
+      <button type="submit" [disabled]="form.invalid">Verify</button>
+    </div>
+  </div>
+</form>
